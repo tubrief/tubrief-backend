@@ -6,6 +6,7 @@ import requests
 import xml.etree.ElementTree as ET
 import re
 import os
+from urllib.parse import urlparse, parse_qs
 
 # Load environment variables from .env file
 load_dotenv()
@@ -27,11 +28,17 @@ def summarize():
         video_url = data.get("url", "")
         print("Received URL:", video_url)
 
-        # Extract YouTube video ID
-        match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", video_url)
-        if not match:
-            return jsonify({"error": "Invalid YouTube URL."})
-        video_id = match.group(1)
+        # Extract YouTube video ID from any format
+        parsed_url = urlparse(video_url)
+        query = parse_qs(parsed_url.query)
+        video_id = query.get("v", [None])[0]
+
+# Handle youtu.be short links
+if not video_id and "youtu.be" in parsed_url.netloc:
+    video_id = parsed_url.path.strip("/")
+
+if not video_id:
+    return jsonify({"error": "Invalid YouTube URL."})
 
         # Fetch captions through ScraperAPI
         scraper_api_key = os.getenv("SCRAPER_API_KEY")
