@@ -1,0 +1,4 @@
+flask
+openai
+youtube-transcript-api
+python-dotenv

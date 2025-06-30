@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>YouTube AI Summarizer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      background-color: #121212;
+      color: white;
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    .light-mode {
+      background-color: white;
+      color: black;
+    }
+    #output {
+      margin-top: 20px;
+      white-space: pre-wrap;
+      border: 1px solid #555;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    button {
+      margin: 10px 5px;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>YouTube AI Summarizer</h1>
+  <input type="text" id="urlInput" placeholder="Enter YouTube URL" size="80">
+  <button onclick="summarizeVideo()">Summarize</button>
+  <button onclick="copySummary()">Copy Summary</button>
+  <button onclick="downloadPDF()">Download as PDF</button>
+  <button onclick="toggleMode()">Toggle Dark/Light Mode</button>
+
+  <div id="videoMeta" style="margin-top: 10px;"></div>
+  <div id="output"></div>
+
+  <script>
+    async function summarizeVideo() {
+      const url = document.getElementById("urlInput").value;
+      const response = await fetch("/summarize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ url: url })
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        document.getElementById("output").textContent = result.summary;
+        document.getElementById("videoMeta").textContent = `${result.title} by ${result.channelTitle} — ${result.duration}`;
+      } else {
+        document.getElementById("output").textContent = "❌ Error: " + result.error;
+        document.getElementById("videoMeta").textContent = "";
+      }
+    }
+
+    function copySummary() {
+      const text = document.getElementById("output").textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Copied to clipboard!");
+      });
+    }
+
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const title = document.getElementById("videoMeta").textContent;
+      const summary = document.getElementById("output").textContent;
+
+      doc.setFontSize(12);
+      doc.text(title, 10, 10);
+      const lines = doc.splitTextToSize(summary, 180);
+      doc.text(lines, 10, 20);
+      doc.save("summary.pdf");
+    }
+
+    function toggleMode() {
+      document.body.classList.toggle("light-mode");
+    }
+  </script>
+</body>
+</html>
