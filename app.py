@@ -45,7 +45,11 @@ def summarize():
         scraper_api_key = os.getenv("SCRAPER_API_KEY")
         original_url = f"https://video.google.com/timedtext?lang=en&v={video_id}"
         encoded_url = urllib.parse.quote_plus(original_url)
-        scraped_url = f"http://api.scraperapi.com?api_key={scraper_api_key}&url={encoded_url}&ultra_premium=true"
+        scraped_url = f"https://api.scraperapi.com?api_key={scraper_api_key}&url={encoded_url}&ultra_premium=true"
+        
+        # Print URL for debugging (optional)
+        print("Scraped URL:", scraped_url)
+
         response = requests.get(scraped_url)
 
         if response.status_code != 200 or not response.text.strip():
