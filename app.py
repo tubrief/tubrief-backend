@@ -2,11 +2,11 @@ from flask import Flask, request, jsonify, render_template
 from googleapiclient.discovery import build
 from openai import OpenAI
 from dotenv import load_dotenv
+from urllib.parse import urlparse, parse_qs
 import requests
 import xml.etree.ElementTree as ET
 import re
 import os
-from urllib.parse import urlparse, parse_qs
 
 # Load environment variables from .env file
 load_dotenv()
@@ -33,12 +33,12 @@ def summarize():
         query = parse_qs(parsed_url.query)
         video_id = query.get("v", [None])[0]
 
-# Handle youtu.be short links
-if not video_id and "youtu.be" in parsed_url.netloc:
-    video_id = parsed_url.path.strip("/")
+        # Handle youtu.be short links
+        if not video_id and "youtu.be" in parsed_url.netloc:
+            video_id = parsed_url.path.strip("/")
 
-if not video_id:
-    return jsonify({"error": "Invalid YouTube URL."})
+        if not video_id:
+            return jsonify({"error": "Invalid YouTube URL."})
 
         # Fetch captions through ScraperAPI
         scraper_api_key = os.getenv("SCRAPER_API_KEY")
