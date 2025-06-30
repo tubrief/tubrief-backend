@@ -3,6 +3,7 @@ from googleapiclient.discovery import build
 from openai import OpenAI
 from dotenv import load_dotenv
 from urllib.parse import urlparse, parse_qs
+import urllib.parse
 import requests
 import xml.etree.ElementTree as ET
 import re
