@@ -22,28 +22,23 @@ def home():
 
 @app.route("/summarize", methods=["POST"])
 def summarize():
-    try:
-        data = request.get_json()
-        video_url = data.get("url", "")
+# Fetch English captions via ScraperAPI
+try:
+    scraper_api_key = os.getenv("SCRAPER_API_KEY")
+    original_url = f"https://video.google.com/timedtext?lang=en&v={video_id}"
+    scraped_url = f"http://api.scraperapi.com?api_key={scraper_api_key}&url={original_url}"
 
-        print("Received URL:", video_url)
+    response = requests.get(scraped_url)
 
-        # Extract YouTube video ID
-        match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11})", video_url)
-        if not match:
-            return jsonify({"error": "Invalid YouTube URL."})
-        video_id = match.group(1)
+    if response.status_code != 200 or not response.text.strip():
+        print("Caption fetch failed:", response.text[:500])
+        return jsonify({"error": "No English transcript available for this video."})
 
-        scraper_api_key = os.getenv("SCRAPER_API_KEY")
-        original_url = f"https://video.google.com/timedtext?lang=en&v={video_id}"
-        scraped_url = f"http://api.scraperapi.com?api_key={scraper_api_key}&url={original_url}"
-
-response = requests.get(scraped_url)
-
-if response.status_code != 200 or not response.text.strip():
-    print("Caption fetch failed:", response.text[:500])
-    return jsonify({"error": "No English transcript available for this video."})
-
+    # Parse XML and combine all text entries
+    root = ET.fromstring(response.content)
+    full_text = "\n".join([elem.text for elem in root.findall("text") if elem.text])
+except Exception as e:
+    return jsonify({"error": f"Failed to fetch transcript: {str(e)}"})
 
         # Parse XML and combine all text entries
         root = ET.fromstring(response.content)
