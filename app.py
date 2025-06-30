@@ -34,12 +34,16 @@ def summarize():
             return jsonify({"error": "Invalid YouTube URL."})
         video_id = match.group(1)
 
-        # Fetch English captions via YouTube's timedtext endpoint
-        captions_url = f"https://video.google.com/timedtext?lang=en&v={video_id}"
-        response = requests.get(captions_url)
+        scraper_api_key = os.getenv("SCRAPER_API_KEY")
+        original_url = f"https://video.google.com/timedtext?lang=en&v={video_id}"
+        scraped_url = f"http://api.scraperapi.com?api_key={scraper_api_key}&url={original_url}"
 
-        if response.status_code != 200 or not response.text.strip():
-            return jsonify({"error": "No English transcript available for this video."})
+response = requests.get(scraped_url)
+
+if response.status_code != 200 or not response.text.strip():
+    print("Caption fetch failed:", response.text[:500])
+    return jsonify({"error": "No English transcript available for this video."})
+
 
         # Parse XML and combine all text entries
         root = ET.fromstring(response.content)
