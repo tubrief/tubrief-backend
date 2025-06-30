@@ -49,6 +49,8 @@ def summarize():
         
         # Print URL for debugging (optional)
         print("Scraped URL:", scraped_url)
+        print("Status Code:", response.status_code)
+        print("Response Snippet:", response.text[:500])
 
         response = requests.get(scraped_url)
 
