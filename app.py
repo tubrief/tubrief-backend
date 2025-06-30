@@ -1,9 +1,9 @@
 from flask import Flask, request, jsonify, render_template
-from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api._errors import TranscriptsDisabled, NoTranscriptFound
 from googleapiclient.discovery import build
 from openai import OpenAI
 from dotenv import load_dotenv
+import requests
+import xml.etree.ElementTree as ET
 import re
 import os
 
@@ -34,23 +34,24 @@ def summarize():
             return jsonify({"error": "Invalid YouTube URL."})
         video_id = match.group(1)
 
-        # Get transcript
-        try:
-            transcript_list = YouTubeTranscriptApi.list_transcripts(video_id)
-            transcript = transcript_list.find_transcript(["en"]).fetch()
-        except (TranscriptsDisabled, NoTranscriptFound):
+        # Fetch English captions via YouTube's timedtext endpoint
+        captions_url = f"https://video.google.com/timedtext?lang=en&v={video_id}"
+        response = requests.get(captions_url)
+
+        if response.status_code != 200 or not response.text.strip():
             return jsonify({"error": "No English transcript available for this video."})
 
-        # Properly extract text from transcript objects
-        full_text = "\n".join(t.text for t in transcript)
+        # Parse XML and combine all text entries
+        root = ET.fromstring(response.content)
+        full_text = "\n".join([elem.text for elem in root.findall("text") if elem.text])
 
         # Get video metadata from YouTube API
         youtube = build("youtube", "v3", developerKey=YOUTUBE_API_KEY)
-        response = youtube.videos().list(part="snippet,contentDetails", id=video_id).execute()
-        if not response["items"]:
+        video_data = youtube.videos().list(part="snippet,contentDetails", id=video_id).execute()
+        if not video_data["items"]:
             return jsonify({"error": "Failed to fetch video metadata."})
 
-        video_info = response["items"][0]
+        video_info = video_data["items"][0]
         title = video_info["snippet"]["title"]
         channel = video_info["snippet"]["channelTitle"]
         duration = video_info["contentDetails"]["duration"]
@@ -87,4 +88,3 @@ def summarize():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
-
