@@ -1,5 +1,4 @@
 flask
 openai
-youtube-transcript-api
 python-dotenv
 google-api-python-client
