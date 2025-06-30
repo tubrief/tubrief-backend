@@ -43,7 +43,7 @@ def summarize():
         # Fetch captions through ScraperAPI
         scraper_api_key = os.getenv("SCRAPER_API_KEY")
         original_url = f"https://video.google.com/timedtext?lang=en&v={video_id}"
-        scraped_url = f"http://api.scraperapi.com?api_key={scraper_api_key}&url={original_url}&premium=true"
+        scraped_url = f"http://api.scraperapi.com?api_key={scraper_api_key}&url={original_url}&ultra_premium=true"
         response = requests.get(scraped_url)
 
         if response.status_code != 200 or not response.text.strip():
